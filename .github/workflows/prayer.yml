@@ -1,0 +1,25 @@
+name: Automated Prayer Bot
+
+on:
+  schedule:
+    - cron: '0 22 * * *'
+  workflow_dispatch: 
+
+jobs:
+  get-prayer-times:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Fetch and Schedule Prayers
+        env:
+          TWITCH_OAUTH_TOKEN: ${{ secrets.TWITCH_OAUTH_TOKEN }}
+          TWITCH_CHANNEL: "noura_mosque"
+        run: |
+          echo "هنا السكربت هيجيب مواقيت الرياض ويبدأ يجدول الخمس صلوات تلقائياً"
