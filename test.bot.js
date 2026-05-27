@@ -21,7 +21,6 @@ async function checkPrayerTimes() {
             { name: "العشاء", time: timings.Isha }
         ];
 
-        // إرسال رسايل الصلاة الخمس مباشرة بدون شروط
         for (const prayer of prayers) {
             const message = `[${prayer.time}] حان الآن موعد صلاة <<${prayer.name}>> بتوقيت الرياض 🕌`;
             if (typeof client !== 'undefined') await client.say(channel, message);
