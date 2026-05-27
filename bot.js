@@ -33,23 +33,18 @@ async function checkPrayerTimes() {
             const timeDifferenceInMs = prayerDate.getTime() - nowRiyadh.getTime();
             const timeDifferenceInMinutes = Math.round(timeDifferenceInMs / 1000 / 60);
 
+            // تم إزالة شرط الـ 15 دقيقة والمقارنة الآن على الدقيقة الحالية بالضبط
             if (timeDifferenceInMinutes === 0) {
                 const message = `[${prayer.time}] حان الآن موعد صلاة <<${prayer.name}>> بتوقيت الرياض 🕌`;
                 if (typeof client !== 'undefined') await client.say(channel, message);
                 console.log(`[نجاح] حان موعد الأذان: ${message}`);
                 messageSent = true;
                 break;
-            } else if (timeDifferenceInMinutes > 0 && timeDifferenceInMinutes <= 15) {
-                const message = `[${prayer.time}] متبقي ${timeDifferenceInMinutes} دقيقة على موعد صلاة <<${prayer.name}>> بتوقيت الرياض 🕌`;
-                if (typeof client !== 'undefined') await client.say(channel, message);
-                console.log(`[نجاح] تم رصد اقتراب الصلاة: ${message}`);
-                messageSent = true;
-                break;
             }
         }
 
         if (!messageSent) {
-            console.log("[معلومة] لا توجد صلاة قريبة في الـ 15 دقيقة القادمة.");
+            console.log("[معلومة] ليست دقيقة أذان الآن، لم يتم إرسال أي رسائل.");
         }
 
     } catch (error) {
@@ -57,5 +52,5 @@ async function checkPrayerTimes() {
     }
 }
 
-// السطر السحري الناقص: تشغيل الدالة فوراً عند تشغيل الأكشن
+// تشغيل الدالة فوراً عند تشغيل الأكشن
 checkPrayerTimes();
