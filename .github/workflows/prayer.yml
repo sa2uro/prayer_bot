@@ -2,8 +2,8 @@ name: Automated Prayer Bot
 
 on:
   schedule:
-    # تشغيل الأكشن كل 15 دقيقة بشكل دوري وآمن تماماً
-    - cron: '*/15 * * * *'
+    # تشغيل الأكشن كل دقيقة بشكل دوري لفحص وقت الصلاة بالدقة المطلوبة
+    - cron: '* * * * *'
   workflow_dispatch: 
 
 jobs:
