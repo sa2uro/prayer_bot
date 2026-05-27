@@ -43,7 +43,7 @@ async function sendPrayerMessage() {
 
             const timeDifference = prayerDate.getTime() - nowRiyadh.getTime();
 
-            if (timeDifference > 0) {
+            if (true) {
                 console.log(`تم جدولة صلاة ${prayer.name} بتوقيت الرياض. ستبث بعد ${Math.round(timeDifference / 1000 / 60)} دقيقة.`);
                 
                 setTimeout(() => {
