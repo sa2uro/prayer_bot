@@ -33,7 +33,6 @@ async function sendPrayerMessage() {
             { name: 'العشاء', time: timings.Isha }
         ];
 
-        // الحصول على الوقت الحالي بتوقيت الرياض
         const riyadhNowStr = new Date().toLocaleString("en-US", { timeZone: "Asia/Riyadh" });
         const nowRiyadh = new Date(riyadhNowStr);
 
@@ -60,5 +59,10 @@ async function sendPrayerMessage() {
 
 client.on('connected', () => {
     console.log("تم اتصال البوت بتويتش بنجاح!");
+    
+    client.say(channel, "🚨 البوت شغال وبيتصل بنجاح الآن! 🚨")
+    .then(() => console.log("تم إرسال الرسالة التجريبية بنجاح!"))
+    .catch((err) => console.error("فشل إرسال الرسالة:", err));
+
     sendPrayerMessage();
 });
