@@ -1,3 +1,12 @@
+const prayers = [
+    { name: "الفجر", time: timings.Fajr },
+    { name: "الظهر", time: timings.Dhuhr },
+    { name: "العصر", time: timings.Asr },
+    { name: "المغرب", time: timings.Maghrib },
+    { name: "العشاء", time: timings.Isha }
+];
+
+// 2. اللوب للمقارنة وإرسال التنبيهات
 for (const prayer of prayers) {
     const [hours, minutes] = prayer.time.split(':').map(Number);
     const prayerDate = new Date(nowRiyadh.getFullYear(), nowRiyadh.getMonth(), nowRiyadh.getDate(), hours, minutes, 0);
