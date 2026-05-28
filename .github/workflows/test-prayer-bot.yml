@@ -1,8 +1,9 @@
-name: Test Prayer Bot Every 5 Minutes
+Name: Test Prayer Bot Continuous
 
 on:
   schedule:
-    - cron: '*/5 * * * *'
+    # سيتم تشغيل السيرفر تلقائياً كل 6 ساعات بدقة لضمان الاستمرارية التامة بدون تداخل
+    - cron: '0 */6 * * *'
   workflow_dispatch:
 
 permissions:
@@ -10,7 +11,7 @@ permissions:
   actions: write
 
 env:
-  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true # إجبار جيت هب على تشغيل الـ Actions بأحدث إصدار لتفادي الحظر
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
 jobs:
   test:
