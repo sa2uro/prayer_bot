@@ -1,13 +1,12 @@
 const fetch = require('node-fetch');
 const tmi = require('tmi.js');
 
-// قراءة اسم القناة من جيت هب، وإذا لم توجد نستخدم القيمة الافتراضية
 const channel = process.env.TWITCH_CHANNEL || '#sa2uro';
 
 const client = new tmi.Client({
     options: { debug: true },
     identity: {
-        username: process.env.TWITCH_CHANNEL, // تعديل: البوت يقرأ اليوزر نيم الصحيح تلقائياً
+        username: process.env.TWITCH_CHANNEL,
         password: process.env.TWITCH_OAUTH_TOKEN
     },
     channels: [channel]
@@ -24,7 +23,7 @@ async function checkPrayerTimes() {
         const data = await response.json();
         const timings = data.data.timings;
 
-        console.log(`[نجاح] تم جلب المواقيت بنجاح من الـ API (الفجر: ${timings.Fajr}، المغرب: ${timings.Maghrib})`);
+        console.log(`[نجاح] تم جلب المواقيت بنجاح (الفجر: ${timings.Fajr}، المغرب: ${timings.Maghrib})`);
 
         const prayers = [
             { name: "الفجر", time: timings.Fajr },
@@ -34,30 +33,29 @@ async function checkPrayerTimes() {
             { name: "العشاء", time: timings.Isha }
         ];
 
-        // إرسال الخمس رسائل بالتتالي
         for (const prayer of prayers) {
             const message = `[${prayer.time}] حان الآن موعد صلاة <<${prayer.name}>> بتوقيت الرياض 🕌`;
             await client.say(channel, message);
             console.log(`[نجاح] تم إرسال رسالة: ${message}`);
         }
 
-        console.log("[اختبار] تم إرسال جميع رسايل الصلوات الخمس بنجاح.");
+        console.log("[اختبار] تم إرسال الدفعة الحالية بنجاح. سنعيد الإرسال بعد دقيقة...");
         
-        // الحل الجذري: ننتظر ثانيتين للتأكد من وصول الرسائل لتويتش ثم نقطع الاتصال لتغلق الرن بنجاح
-        setTimeout(async () => {
-            console.log("[تويتش] جاري قطع الاتصال لإنهاء خطوة جيت هب بنجاح...");
-            await client.disconnect();
-            process.exit(0); // إنهاء البرنامج بنجاح
-        }, 2000);
+        // تعديل التيست: بدل ما نقفل البوت، هنخليه يستنى دقيقة (60000 مللي ثانية) ويعيد الدالة تاني تلقائياً!
+        setTimeout(() => {
+            checkPrayerTimes();
+        }, 60000); 
 
     } catch (error) {
         console.error("[خطأ] فشل في جلب مواقيت الصلاة:", error);
-        await client.disconnect();
-        process.exit(1); // إنهاء البرنامج مع تسجيل خطأ
+        // في حال حدوث خطأ ننتظر دقيقة أيضاً ونحاول مجدداً
+        setTimeout(() => {
+            checkPrayerTimes();
+        }, 60000);
     }
 }
 
 client.on('connected', () => {
-    console.log('[تويتش] تم الاتصال بنجاح.');
+    console.log('[تويتش] تم الاتصال بنجاح وبدء حلقة الاختبار الدورية.');
     checkPrayerTimes();
 });
