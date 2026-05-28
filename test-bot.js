@@ -6,7 +6,7 @@ const channel = process.env.TWITCH_CHANNEL || '#sa2uro';
 const client = new tmi.Client({
     options: { debug: true },
     identity: {
-        username: process.env.TWITCH_CHANNEL,
+        username: process.env.TWITCH_CHANNEL.replace('#', ''),
         password: process.env.TWITCH_OAUTH_TOKEN
     },
     channels: [channel]
@@ -39,23 +39,16 @@ async function checkPrayerTimes() {
             console.log(`[نجاح] تم إرسال رسالة: ${message}`);
         }
 
-        console.log("[اختبار] تم إرسال الدفعة الحالية بنجاح. سنعيد الإرسال بعد دقيقة...");
-        
-        // تعديل التيست: بدل ما نقفل البوت، هنخليه يستنى دقيقة (60000 مللي ثانية) ويعيد الدالة تاني تلقائياً!
-        setTimeout(() => {
-            checkPrayerTimes();
-        }, 60000); 
+        console.log("[اختبار] تم إرسال الدفعة الحالية بنجاح، وسيتم إغلاق البوت الآن.");
+        process.exit(0);
 
     } catch (error) {
         console.error("[خطأ] فشل في جلب مواقيت الصلاة:", error);
-        // في حال حدوث خطأ ننتظر دقيقة أيضاً ونحاول مجدداً
-        setTimeout(() => {
-            checkPrayerTimes();
-        }, 60000);
+        process.exit(1);
     }
 }
 
 client.on('connected', () => {
-    console.log('[تويتش] تم الاتصال بنجاح وبدء حلقة الاختبار الدورية.');
+    console.log('[تويتش] تم الاتصال بنجاح وبدء فحص مواقيت الصلاة.');
     checkPrayerTimes();
 });
