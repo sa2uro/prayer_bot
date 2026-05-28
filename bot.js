@@ -1,56 +1,70 @@
 const fetch = require('node-fetch');
 const tmi = require('tmi.js');
 
-// استدعاء المتغيرات البيئية
 const channel = process.env.TWITCH_CHANNEL || '#sa2uro';
 const oauthToken = process.env.TWITCH_OAUTH_TOKEN;
-const botUsername = process.env.TWITCH_BOT_USERNAME || 'sa2uro'; // اسم حساب البوت الخاص بك
 
-// إعدادات الاتصال بـ Twitch
-const opts = {
-    options: { debug: true },
+const client = new tmi.Client({
+    options: { debug: false },
     identity: {
-        username: botUsername,
-        password: `oauth:${oauthToken.replace('oauth:', '')}` // التأكد من صيغة التوكن
+        username: channel.replace('#', ''),
+        password: oauthToken
     },
-    channels: [channel.replace('#', '')]
-};
+    channels: [channel]
+});
 
-// إنشاء كائن الاتصال بتويتش
-const client = new tmi.client(opts);
+async function checkPrayerTimes() {
+    const nowRiyadh = new Date(new Date().toLocaleString("en-US", {timeZone: "Asia/Riyadh"}));
+    console.log(`[فحص] الوقت الحالي بتوقيت الرياض: ${nowRiyadh.toLocaleTimeString('ar-EG')}`);
 
-async function run() {
     try {
-        console.log("جاري الاتصال بـ Twitch...");
-        await client.connect();
-        console.log("تم الاتصال بنجاح!");
-
-        // جلب بيانات الصلاة من الـ API (تعديل الأوقات أو الرابط حسب ما يناسبك)
-        const response = await fetch('https://api.aladhan.com/v1/timingsByCity?city=Cairo&country=Egypt&method=5');
+        const response = await fetch('https://api.aladhan.com/v1/timingsByCity?city=Riyadh&country=Saudi Arabia&method=4');
         const data = await response.json();
         const timings = data.data.timings;
 
-        // هنا يمكنك إضافة منطق الفحص والمقارنة مع الوقت الحالي
-        // كمثال لإرسال الرسالة والتأكد من إرسالها قبل الخروج:
-        const message = "حان الآن موعد الأذان حسب التوقيت المحلي.";
-        
-        console.log(`جاري إرسال الرسالة إلى قناة ${channel}...`);
-        await client.say(channel, message);
-        console.log("تم إرسال الرسالة بنجاح!");
+        console.log(`[نجاح] تم جلب المواقيت بنجاح (الفجر: ${timings.Fajr}، الظهر: ${timings.Dhuhr}، العصر: ${timings.Asr}، المغرب: ${timings.Maghrib}، العشاء: ${timings.Isha})`);
+
+        const prayers = [
+            { name: "الفجر", time: timings.Fajr },
+            { name: "الظهر", time: timings.Dhuhr },
+            { name: "العصر", time: timings.Asr },
+            { name: "المغرب", time: timings.Maghrib },
+            { name: "العشاء", time: timings.Isha }
+        ];
+
+        let messageSent = false;
+
+        for (const prayer of prayers) {
+            const [hours, minutes] = prayer.time.split(':').map(Number);
+            const prayerDate = new Date(nowRiyadh.getFullYear(), nowRiyadh.getMonth(), nowRiyadh.getDate(), hours, minutes, 0);
+
+            const timeDifferenceInMs = nowRiyadh.getTime() - prayerDate.getTime();
+            const timeDifferenceInMinutes = timeDifferenceInMs / 1000 / 60;
+
+            if (timeDifferenceInMinutes >= 0 && timeDifferenceInMinutes < 5) {
+                const message = `[${prayer.time}] حان الآن موعد صلاة <<${prayer.name}>> بتوقيت الرياض 🕌`;
+                
+                console.log(`[جاري الاتصال] محاولة الاتصال بتويتش لإرسال رسالة صلاة ${prayer.name}...`);
+                
+                await client.connect();
+                await client.say(channel, message);
+                console.log(`[نجاح] تم إرسال الرسالة إلى الشات بنجاح: ${message}`);
+                await client.disconnect();
+                
+                messageSent = true;
+                break;
+            }
+        }
+
+        if (!messageSent) {
+            console.log("[معلومة] ليست دقيقة أذان الآن (ولم نمر بفترة الـ 5 دقائق بعد الأذان)، لم يتم إرسال أي رسائل.");
+            process.exit(0);
+        }
 
     } catch (error) {
-        console.error("حدث خطأ أثناء التشغيل:", error);
-    } finally {
-        // قطع الاتصال بأمان بعد إتمام المهمة حتى لا يظل الأكشن معلقاً للأبد
-        try {
-            await client.disconnect();
-            console.log("تم قطع الاتصال بـ Twitch بأمان.");
-        } catch (disError) {
-            console.error("خطأ أثناء قطع الاتصال:", disError);
-        }
-        process.exit(0);
+        console.error("[خطأ] فشل في العملية:", error);
+        process.exit(1);
     }
 }
 
-// تشغيل الدالة الأساسية
-run();
+checkPrayerTimes();
