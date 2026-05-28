@@ -15,7 +15,7 @@ const client = new tmi.Client({
 
 async function checkPrayerTimes() {
     const nowRiyadh = new Date(new Date().toLocaleString("en-US", {timeZone: "Asia/Riyadh"}));
-    console.log(`[فحص] الوقت الحالي بتوقيت الرياض: ${nowRiyadh.toLocaleTimeString('ar-EG')}`);
+    console.log(`[فحص] الوقت الحالي بتوقيت الرياض: ${nowRiyadh.toLocaleTimeString('ar-EG', { hour12: false })}`);
 
     try {
         const response = await fetch('https://api.aladhan.com/v1/timingsByCity?city=Riyadh&country=Saudi Arabia&method=4');
@@ -39,18 +39,14 @@ async function checkPrayerTimes() {
             const [hours, minutes] = prayer.time.split(':').map(Number);
             const prayerDate = new Date(nowRiyadh.getFullYear(), nowRiyadh.getMonth(), nowRiyadh.getDate(), hours, minutes, 0);
 
-            // حساب الفرق بالدقائق بين وقت الصلاة والوقت الحالي
-            // النتيجة بالموجب تعني أن الصلاة قادمة، بالسالب تعني أن الصلاة مضت
             const timeDifferenceInMs = prayerDate.getTime() - nowRiyadh.getTime();
             const timeDifferenceInMinutes = Math.ceil(timeDifferenceInMs / 1000 / 60);
 
-            // الحالة الأولى: وقت الصلاة الآن بالضبط (الفرق صفر أو دقيقة الأذان)
             if (timeDifferenceInMinutes === 0 || (nowRiyadh.getHours() === hours && nowRiyadh.getMinutes() === minutes)) {
                 messageToSend = `[${prayer.time}] حان الآن موعد صلاة <<${prayer.name}>> بتوقيت الرياض 🕌`;
                 prayerName = prayer.name;
                 break;
             } 
-            // الحالة الثانية: الصلاة قادمة في خلال الـ 5 دقائق القادمة (من دقيقة إلى 5 دقائق)
             else if (timeDifferenceInMinutes > 0 && timeDifferenceInMinutes <= 5) {
                 messageToSend = `[${prayer.time}] متبقي ${timeDifferenceInMinutes} دقائق على صلاة <<${prayer.name}>> بتوقيت الرياض 🕌`;
                 prayerName = prayer.name;
@@ -63,8 +59,16 @@ async function checkPrayerTimes() {
             await client.connect();
             await client.say(channel, messageToSend);
             console.log(`[نجاح] تم إرسال الرسالة إلى الشات بنجاح: ${messageToSend}`);
-            await client.disconnect();
-            process.exit(0);
+            
+            // نمهل الكود ثانيتين لضمان خروج البيانات من السيرفر تماماً قبل قطع الاتصال والإغلاق
+            setTimeout(async () => {
+                try {
+                    await client.disconnect();
+                } catch (e) {}
+                console.log("[إغلاق] تم إنهاء الرن بنجاح.");
+                process.exit(0);
+            }, 2000);
+
         } else {
             console.log("[معلومة] لا يوجد أذان حالي أو قريب في الـ 5 دقائق القادمة، لم يتم إرسال أي رسائل.");
             process.exit(0);
