@@ -25,4 +25,3 @@ jobs:
         env:
           TWITCH_CHANNEL: ${{ secrets.TWITCH_CHANNEL }}
           TWITCH_OAUTH_TOKEN: ${{ secrets.TWITCH_OAUTH_TOKEN }}
-        
