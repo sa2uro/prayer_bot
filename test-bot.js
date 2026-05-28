@@ -1,6 +1,18 @@
 const fetch = require('node-fetch');
+const tmi = require('tmi.js');
 
-const channel = process.env.TWITCH_CHANNEL || '#sa2uro'; 
+const channel = process.env.TWITCH_CHANNEL || '#sa2uro';
+
+const client = new tmi.Client({
+    options: { debug: true },
+    identity: {
+        username: 'your_bot_username', // يمكنك وضع اسم حساب البوت أو تركه فارغاً
+        password: process.env.TWITCH_OAUTH_TOKEN
+    },
+    channels: [channel]
+});
+
+client.connect().catch(console.error);
 
 async function checkPrayerTimes() {
     const nowRiyadh = new Date(new Date().toLocaleString("en-US", {timeZone: "Asia/Riyadh"}));
@@ -23,15 +35,20 @@ async function checkPrayerTimes() {
 
         for (const prayer of prayers) {
             const message = `[${prayer.time}] حان الآن موعد صلاة <<${prayer.name}>> بتوقيت الرياض 🕌`;
-            if (typeof client !== 'undefined') await client.say(channel, message);
+            await client.say(channel, message);
             console.log(`[نجاح] تم إرسال رسالة: ${message}`);
         }
 
         console.log("[اختبار] تم إرسال جميع رسايل الصلوات الخمس بنجاح.");
+        await client.disconnect();
 
     } catch (error) {
         console.error("[خطأ] فشل في جلب مواقيت الصلاة:", error);
+        await client.disconnect();
     }
 }
 
-checkPrayerTimes();
+client.on('connected', () => {
+    console.log('[تويتش] تم الاتصال بنجاح.');
+    checkPrayerTimes();
+});
