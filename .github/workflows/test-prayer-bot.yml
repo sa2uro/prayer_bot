@@ -1,7 +1,9 @@
-name: Test Prayer Bot
+name: Test Prayer Bot Every Minute
 
 on:
-  workflow_dispatch:
+  schedule:
+    - cron: '*/1 * * * *' # هيدير التيست تلقائياً كل دقيقة
+  workflow_dispatch: # عشان لو تحب تشغله بإيدك برضه في أي وقت
 
 jobs:
   test:
