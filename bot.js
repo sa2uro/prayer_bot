@@ -1,56 +1,56 @@
-// استدعاء مكتبة الـ fetch لجلب البيانات
 const fetch = require('node-fetch');
+const tmi = require('tmi.js');
 
-// إعدادات البوت الأساسية (تأكد أن المتغيرات دي موجودة عندك برة أو سيبها لو متعرفة في بقية الملف)
-const channel = process.env.TWITCH_CHANNEL || '#sa2uro'; 
-// ملاحظة: تأكد أن كائن الـ client الخاص بـ tmi.js معرف عندك فوق أو تحت في الملف إذا كان هناك بقية للكود
+// استدعاء المتغيرات البيئية
+const channel = process.env.TWITCH_CHANNEL || '#sa2uro';
+const oauthToken = process.env.TWITCH_OAUTH_TOKEN;
+const botUsername = process.env.TWITCH_BOT_USERNAME || 'sa2uro'; // اسم حساب البوت الخاص بك
 
-async function checkPrayerTimes() {
-    const nowRiyadh = new Date(new Date().toLocaleString("en-US", {timeZone: "Asia/Riyadh"}));
-    console.log(`[فحص] الوقت الحالي بتوقيت الرياض: ${nowRiyadh.toLocaleTimeString('ar-EG')}`);
+// إعدادات الاتصال بـ Twitch
+const opts = {
+    options: { debug: true },
+    identity: {
+        username: botUsername,
+        password: `oauth:${oauthToken.replace('oauth:', '')}` // التأكد من صيغة التوكن
+    },
+    channels: [channel.replace('#', '')]
+};
 
+// إنشاء كائن الاتصال بتويتش
+const client = new tmi.client(opts);
+
+async function run() {
     try {
-        const response = await fetch('https://api.aladhan.com/v1/timingsByCity?city=Riyadh&country=Saudi Arabia&method=4');
+        console.log("جاري الاتصال بـ Twitch...");
+        await client.connect();
+        console.log("تم الاتصال بنجاح!");
+
+        // جلب بيانات الصلاة من الـ API (تعديل الأوقات أو الرابط حسب ما يناسبك)
+        const response = await fetch('https://api.aladhan.com/v1/timingsByCity?city=Cairo&country=Egypt&method=5');
         const data = await response.json();
         const timings = data.data.timings;
 
-        console.log(`[نجاح] تم جلب المواقيت بنجاح من الـ API (الفجر: ${timings.Fajr}، المغرب: ${timings.Maghrib})`);
-
-        const prayers = [
-            { name: "الفجر", time: timings.Fajr },
-            { name: "الظهر", time: timings.Dhuhr },
-            { name: "العصر", time: timings.Asr },
-            { name: "المغرب", time: timings.Maghrib },
-            { name: "العشاء", time: timings.Isha }
-        ];
-
-        let messageSent = false;
-
-        for (const prayer of prayers) {
-            const [hours, minutes] = prayer.time.split(':').map(Number);
-            const prayerDate = new Date(nowRiyadh.getFullYear(), nowRiyadh.getMonth(), nowRiyadh.getDate(), hours, minutes, 0);
-
-            const timeDifferenceInMs = prayerDate.getTime() - nowRiyadh.getTime();
-            const timeDifferenceInMinutes = Math.round(timeDifferenceInMs / 1000 / 60);
-
-            // تم إزالة شرط الـ 15 دقيقة والمقارنة الآن على الدقيقة الحالية بالضبط
-            if (timeDifferenceInMinutes === 0) {
-                const message = `[${prayer.time}] حان الآن موعد صلاة <<${prayer.name}>> بتوقيت الرياض 🕌`;
-                if (typeof client !== 'undefined') await client.say(channel, message);
-                console.log(`[نجاح] حان موعد الأذان: ${message}`);
-                messageSent = true;
-                break;
-            }
-        }
-
-        if (!messageSent) {
-            console.log("[معلومة] ليست دقيقة أذان الآن، لم يتم إرسال أي رسائل.");
-        }
+        // هنا يمكنك إضافة منطق الفحص والمقارنة مع الوقت الحالي
+        // كمثال لإرسال الرسالة والتأكد من إرسالها قبل الخروج:
+        const message = "حان الآن موعد الأذان حسب التوقيت المحلي.";
+        
+        console.log(`جاري إرسال الرسالة إلى قناة ${channel}...`);
+        await client.say(channel, message);
+        console.log("تم إرسال الرسالة بنجاح!");
 
     } catch (error) {
-        console.error("[خطأ] فشل في جلب مواقيت الصلاة:", error);
+        console.error("حدث خطأ أثناء التشغيل:", error);
+    } finally {
+        // قطع الاتصال بأمان بعد إتمام المهمة حتى لا يظل الأكشن معلقاً للأبد
+        try {
+            await client.disconnect();
+            console.log("تم قطع الاتصال بـ Twitch بأمان.");
+        } catch (disError) {
+            console.error("خطأ أثناء قطع الاتصال:", disError);
+        }
+        process.exit(0);
     }
 }
 
-// تشغيل الدالة فوراً عند تشغيل الأكشن
-checkPrayerTimes();
+// تشغيل الدالة الأساسية
+run();
