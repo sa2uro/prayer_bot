@@ -37,10 +37,17 @@ async function checkPrayerTimes() {
             const message = `[${prayer.time}] حان الآن موعد صلاة <<${prayer.name}>> بتوقيت الرياض 🕌`;
             await client.say(channel, message);
             console.log(`[نجاح] تم إرسال رسالة: ${message}`);
+            // انتظار نص ثانية بين كل رسالة ورسالة للتأكد من خروجها بالترتيب
+            await new Promise(resolve => setTimeout(resolve, 500));
         }
 
-        console.log("[اختبار] تم إرسال الدفعة الحالية بنجاح، وسيتم إغلاق البوت الآن.");
-        process.exit(0);
+        console.log("[اختبار] تم إرسال الدفعة الحالية. جاري الانتظار ثانيتين لضمان وصول البيانات قبل الإغلاق...");
+        
+        // تأخير الإغلاق لمدة ثانيتين لضمان خروج البيانات بالكامل من السيرفر وتجنب قطع الاتصال المفاجئ
+        setTimeout(() => {
+            console.log("[إغلاق] تم التأكيد. إغلاق البوت الآن.");
+            process.exit(0);
+        }, 2000);
 
     } catch (error) {
         console.error("[خطأ] فشل في جلب مواقيت الصلاة:", error);
