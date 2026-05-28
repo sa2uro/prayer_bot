@@ -1,30 +1,31 @@
-name: Automated Prayer Bot
+name: Twitch Prayer Reminder Bot
 
 on:
   schedule:
-    # تشغيل الأكشن كل دقيقة بشكل دوري لفحص وقت الصلاة بالدقة المطلوبة
+    # تشغيل الأكشن كل دقيقة للتأكد من مواقيت الصلاة دون فواتها
     - cron: '* * * * *'
-  workflow_dispatch: 
+  workflow_dispatch: # يتيح لك تشغيل البوت يدوياً للتجربة من موقع جيت هب
 
 jobs:
-  get-prayer-times:
+  run-bot:
     runs-on: ubuntu-latest
+
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+      - name: Checkout Repository
+        uses: actions/checkout@v3
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v3
         with:
-          node-version: '20'
+          node-node-version: '18'
 
       - name: Install Dependencies
         run: |
-          npm install tmi.js node-fetch@2
+          npm install node-fetch@2 tmi.js
 
-      - name: Fetch and Schedule Prayers
+      - name: Run Prayer Bot Script
         env:
           TWITCH_OAUTH_TOKEN: ${{ secrets.TWITCH_OAUTH_TOKEN }}
-          TWITCH_CHANNEL: "#sa2uro"
-        run: |
-          node bot.js
+          TWITCH_CHANNEL: '#sa2uro'
+          TWITCH_BOT_USERNAME: 'sa2uro'
+        run: node bot.js
